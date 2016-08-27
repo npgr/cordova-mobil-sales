@@ -1,0 +1,1134 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-iconset-svg/iron-iconset-svg.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+
+<!--<link rel="import" href="my-icons.html">-->
+
+<dom-module id="app-pedido">
+
+  <template>
+
+    <style>
+		/** Logo Farvenca Móvil */
+		/*.logo {
+			background-image: url(data:image/png;base64,...);
+			width: 180px; height: 44px;
+			margin: 20px 20px;
+		}*/
+		
+      :host {
+        display: block;
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+      }
+
+      app-header {
+        background-color: var(--app-primary-color);
+        color: #fff;
+      }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        line-height: 40px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+      }
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+      .drawer-list a.subroute {
+        padding-left: 32px;
+      }
+	  .card {
+		box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+		padding: 14px;
+		margin: 10px;
+		border-radius: 5px;
+		background-color: #fff;
+		color: #757575;
+	  }
+	  paper-button {
+		background-color: #68c122;
+	  }
+	  paper-fab {
+		background-color: rgb(128, 128, 255);
+		color: white;
+	  }
+	  app-drawer {
+		--app-drawer-width: 220px;
+	  }
+	  .menu_item {
+		margin : 20px 15px;
+	  }
+	  iron-icon {
+		color: gray;
+	  }
+	  [hide] {
+		display: none;
+	  }
+	  [blue] {
+		background-color:#03A9F4;
+	  }
+	  [orange] {
+		background-color: #FF9800;
+	  }
+	  [center] {
+		display:flex;
+		justify-content:center;
+	  }
+
+    </style>
+	
+	<dom-module id="tab-renglones">
+	  <template>
+		<div style="display: flex;justify-content:center;">
+		   <paper-input id="sku" value=[[pedido.skus]] label="Products" style="width: 60px;" readonly></paper-input>
+		   <paper-input id="unds" value=[[pedido.unds]] label="Units" style="width: 70px; padding-left:7px;" readonly></paper-input>
+			<paper-input id="mto" value=[[pedido.mto]] label="Amount" style="width: 125px; padding-left:7px;" readonly></paper-input>
+		</div>
+		<template id="mytemplate2" is="dom-repeat" items="{{renglones}}" observe="unds">
+		 <div class="card">
+			<strong class="desc">{{item.prd}}</strong>
+			<br>
+			<div style="display:flex;justify-content:space-between">
+				<paper-input type="number" style="width: 80px;padding-top: 0px; margin-top:0px;" on-change="cambiar_renglon" value={{item.unds}} no-label-float></paper-input>
+				<small class="precio" style="margin-left:15px;">Price: {{item.prc}}</small>
+				<paper-icon-button id="[[item.id]]" name="[[item.prd]]" icon="highlight-off" on-click="borrar" style="margin-left:15px;color:#D84315;"></paper-icon-button>
+			</div>
+		  </div>
+		</template>
+	  </template>
+	  <script>
+		Polymer({
+			is: 'tab-renglones',
+			properties: {
+				/*renglones: {
+					type: Array,
+					value: function() { return []; }
+				}*/
+			},
+			ready: function() {
+				this.renglones = []
+				this.app_pedido = document.getElementById('app_pedido')
+			},
+			set_renglones: function(pedido) {
+				this.renglones = []
+				this.$.mytemplate2.render()
+				//this.renglones = this.app_pedido.get_pedido()
+				
+				this.renglones = pedido /** clone array */
+				this.pedido = this.app_pedido.total_pedido()
+				//console.log(this.renglones)
+				//this.renglones_txt = JSON.stringify(this.renglones)
+			},
+			borrar: function(e) {
+				//var arr = e.target.domHost.id.split('___')
+				var name = e.target.domHost.name
+				var r = confirm("Delete "+name+" ?");
+				if (r == true) {
+					var id = e.target.domHost.id
+					for (var i=0; i<this.renglones.length; i++)
+					{
+						if (this.renglones[i].id == id)
+						{
+							this.renglones.splice(i,1)
+							i = this.renglones.length
+						}
+					}
+					//this.renglones_txt = JSON.stringify(this.renglones)
+					this.$.mytemplate2.render()
+					this.app_pedido.set_pedido(this.renglones)
+					this.pedido = this.app_pedido.total_pedido()
+				}
+			},
+			cambiar_renglon: function() {
+				for (var i=0; i<this.renglones.length; i++)
+					if (typeof this.renglones[i].unds == 'string')
+					{
+						this.renglones[i].unds = Number(this.renglones[i].unds)
+						if (this.renglones[i].unds == 0)
+							this.renglones.splice(i, 1)
+						i = this.renglones.length
+					}
+				//this.renglones_txt = JSON.stringify(this.renglones)
+				this.app_pedido.set_pedido(this.renglones)
+				this.pedido = this.app_pedido.total_pedido()
+			}
+		})
+	  </script>
+	</dom-module>
+	
+	
+	<dom-module id="tab-prods">
+	 <template>
+	 <style>
+	  #prod_src {
+		margin-left: 12px;
+		width: 6em;
+	  }
+	  #loc-button {
+		background-color: rgb(128, 128, 255);
+		color: white;
+		//position: absolute;
+		border-radius: 50%;
+		min-width: 0px;
+		padding:2px;
+		//top:12px;
+		//left: 150px;
+      }
+	  /*#find-button {
+		position: absolute;
+		top:12px;
+		left: 225px;
+      }*/
+	  .row {
+		margin: 3px 5px 0px 5px;
+		padding: 5px;
+		background-color: white;
+	  }
+	  .desc {
+		opacity: .87;
+	  }
+	  .existencia {
+		color:green;
+		opacity:.7;
+	  }
+	  .precio {
+		opacity: .54;
+	  }
+	 </style>
+		<iron-ajax id="ajax" method='POST' handle-as="json" on-response="load_data" on-error="ajax_error"></iron-ajax>
+		<paper-fab mini orange icon="autorenew" elevation=3 z-index=10 on-click="get_productos" style="position:absolute; left:263px; top:100px;"></paper-fab>
+		<div>{{msg}}</div>
+		<div style="display:flex">
+			<iron-a11y-keys id="a11y" target="[[target]]" keys="enter" on-keys-pressed="filter"></iron-a11y-keys>
+			<paper-input id="prod_src" label="Product" no-label-float></paper-input>
+			<paper-icon-button icon="search" on-click="filter" style="color:chocolate;"></paper-icon-button>
+			<!--<paper-button mini id="loc-button" on-click="change_loc">{{loc}}</paper-button>-->
+			<!--<paper-fab mini id="find-button" icon="arrow-forward" style="margin-left:7px;" on-click="filter"></paper-fab>-->
+			<strong id="tot" style="margin-left:15px;margin-top:10px;">{{filtered_data.length}} prods</strong>
+		</div>
+		<template id="mytemplate" is="dom-repeat" items="{{filtered_data}}">
+		  <div class="card">
+			<strong class="desc">{{item.prd}}</strong>
+			<br>
+			<strong class="existencia">({{item.ex}} Unts)</strong>
+			<small class="precio" valor={{item.prc}} style="margin-left:20px;">Price: {{item.prc}}</small>
+			<paper-input id="{{item.id}}" prd="{{item.prd}}" prc="{{item.prc}}" value="{{item.unds}}" type="number" style="width: 80px;padding-top: 0px; margin-top:0px;" on-change="pedir_renglon" no-label-float></paper-input> 
+		  </div>
+		</template>
+	 </template>
+	<script>
+		Polymer({
+			is: 'tab-prods',
+			ready: function() {
+				
+				/*var prods = [
+					{ id: 100, prd: 'ATAMEL JBE x 100MG', ex: 25, prc: 11.2 },
+					{ id: 120, prd: 'ATAMEL TAB x 250MG', ex: 45, prc: 24.5, psico: 'P' },
+					{ id: 87,  prd: 'ATAMEL COMP x 80MG', ex: 11, prc: 123.75  },
+					{ id: 87,  prd: 'ATAMELCO TAB x 180MG', ex: 65, prc: 87.75  },
+					{ id: 87,  prd: 'CATAFLAM SOB x 10 de 5MG', ex: 1200, prc: 87.75  },
+					{ id: 87,  prd: 'CATAFLAM SOB x 20 de 5MG', ex: 200, prc: 325.8  },
+					{ id: 87,  prd: 'CATAFLAM COMP x 25 de 2,5MG', ex: 867, prc: 437  }
+				]
+				localStorage["prod_data"] = JSON.stringify(prods)*/
+				this.app_pedido = document.getElementById('app_pedido')
+				if (localStorage.getItem("prod_data") === null)
+					this.productos = []
+				 else
+				    this.productos = JSON.parse(localStorage.getItem("prod_data"))
+				this.msg = 'Products: '+this.productos.length
+				this.filtered_data = []
+			},
+			pedir_renglon: function(e) {
+				//alert("exito")
+				var renglon = {
+					id: e.target.domHost.id,
+					prd: e.target.domHost.prd,
+					prc: e.target.domHost.prc,
+					unds: Number(e.target.value)
+				}
+				//console.log(renglon)
+				this.app_pedido.agregar_renglon(renglon)
+			}, 
+			filter: function() {
+				this.$.prod_src.blur()
+				this.$.tot.focus()
+				this.filtered_data=[]
+				this.$.mytemplate.render()
+				/*if (this.$.prod_src.value.length >= 3)
+				{*/
+					this.filtered_data = []
+					var filtered_d = []
+					for (i=0; i<this.productos.length; i++)
+					if (this.productos[i].prd.toLowerCase().indexOf(this.$.prod_src.value.toLowerCase()) > -1)
+					{
+					//if (this.loc == 'CDA') this.data[i].existencia = this.data[i].existencia_cda
+					//if (this.loc == 'CDG') this.data[i].existencia = this.data[i].existencia_cdg
+						
+						if (this.productos[i].ex != -1) filtered_d.push(this.productos[i])
+					}
+					for (var i=0; i<filtered_d.length; i++)
+					{
+						var unds = this.app_pedido.get_unds(filtered_d[i].id)
+						if (unds != -1) filtered_d[i].unds = unds
+							else filtered_d[i].unds = ''
+					}
+					this.filtered_data = filtered_d
+					filtered_d = []
+				/*}
+				else
+					alert("El Filtro debe tener al menos 3 caracteres")*/
+			},
+			has_filter: function() {
+				if (this.$.prod_src.value.length >= 3)
+					return true
+				 else
+					return false
+			},
+			get_productos: function() {
+				/** Demo Electron **/
+				//this.get_products_from_file()
+				/** Demo Cordova **/
+				this.get_products_from_code()
+				return				
+				/** From REST WS **/
+				//this.$.ajax.url = 'http://e0c4cfea.ngrok.io/proddata'
+				//this.$.ajax.url = 'http://localhost:3000/proddata'
+				//this.$.ajax.url = 'http://fvc-ngoncalves:3000/proddata'
+				this.$.ajax.url = 'https://api.myjson.com/bins/2uqcr'
+				this.$.ajax.method = 'GET'
+				this.$.ajax.contentType="application/json"
+				this.$.ajax.body = {"my_key": "v3nt4m0v1l.123"}
+				this.msg = 'Loading...'
+				this.$.ajax.generateRequest()
+			},
+			get_products_from_file() {
+				
+				//var fs = require('child_process').fs;
+				var fs = require('fs')
+				var data = fs.readFileSync('data/products.json','utf8')
+				this.productos = JSON.parse(data)
+				localStorage["prod_data"] = data
+				this.msg = 'Loaded '+this.productos.length+' Products'
+			},
+			get_products_from_code() {
+				this.productos = [
+					{"id": 1,"prd":"12 Colored Short Pencils","category":"Pens & Art Supplies","ex":25,"prc": 11.2, "discount":4},
+					{"id": 2,"prd":"24 Capacity Maxi Data Binder Racks","category":"Storage & Organization","ex":0,"prc": 11.2, "discount":0},
+					{"id": 3,"prd":"3M Organizer Strips","category":"Binders and Binder Accessories","ex":8,"prc": 11.2, "discount":0},
+					{"id": 4,"prd":"Acme 3-Hole Punch","category":"Binders and Binder Accessories","ex":30,"prc": 11.2, "discount":2},
+					{"id": 5,"prd":"Acme 6 Outlet Guardian Premium Surge Suppressor","category":"Appliances","ex":10,"prc": 11.2, "discount":5},
+					{"id": 6,"prd":"Acco Six-Outlet Power Strip, 4' Cord Length","category":"Appliances","ex":80,"prc": 11.2, "discount":0},
+					{"id": 7,"prd":"Accohide Poly Flexible Ring Binders","category":"Binders and Binder Accessories","ex":8,"prc": 11.2, "discount":0},
+					{"id": 8,"prd":"Acme® Box Cutter Scissors","category":"Scissors, Rulers and Trimmers","ex":40,"prc": 11.2, "discount":0},
+					{"id": 9,"prd":"Acme® Design Stainless Steel Bent Scissors","category":"Scissors, Rulers and Trimmers","ex":30,"prc": 11.2, "discount":3},
+					{"id": 10,"prd":"Array® Memo Cubes","category":"Paper","ex":5,"prc": 11.2, "discount":2},
+					{"id": 11,"prd":"Array® Parchment Paper, Assorted Colors","category":"Paper","ex":25,"prc": 11.2, "discount":0},
+					{"id": 12,"prd":"Assorted Color Push Pins","category":"Rubber Bands","ex":25,"prc": 11.2, "discount":0},
+					{"id": 13,"prd":"Barrel Sharpener","category":"Pens & Art Supplies","ex":25,"prc": 11.2, "discount":5},
+					{"id": 14,"prd":"Acme 325VA UPS Surge Protector","category":"Appliances","ex":0,"prc": 11.2, "discount":0},
+					{"id": 15,"prd":"Acme 6 Outlet Metallic Surge Strip","category":"Appliances","ex":25,"prc": 11.2, "discount":2},
+					{"id": 16,"prd":"Colored Envelopes","category":"Envelopes","ex":25,"prc": 11.2, "discount":3},
+					{"id": 17,"prd":"Computer Printout Paper with Letter-Trim Perforations","category":"Paper","ex":5,"prc": 11.2, "discount":0},
+					{"id": 18,"prd":"Crayola Anti Dust Chalk, 12/Pack","category":"Pens & Art Supplies","ex":25,"prc": 11.2, "discount":4},
+					{"id": 19,"prd":"Decoflex Hanging Personal Folder File, Blue","category":"Storage & Organization","ex":25,"prc": 11.2, "discount":1},
+					{"id": 20,"prd":"Fluorescent Highlighters by Dixon","category":"Pens & Art Supplies","ex":0,"prc": 11.2, "discount":10},
+					{"id": 21,"prd":"Grip Seal Envelopes","category":"Envelopes","ex":25,"prc": 11.2, "discount":11},
+					{"id": 22,"prd":"Commercial Lightweight Upright Vacuum","category":"Appliances","ex":5,"prc": 11.2, "discount":20},
+					{"id": 23,"prd":"HP Office Paper (20Lb. and 87 Bright)","category":"Paper","ex":25,"prc": 11.2, "discount":8},
+					{"id": 24,"prd":"Laser Imprintable Binding System Covers","category":"Binders and Binder Accessories","ex":5,"prc": 11.2, "discount":12}
+				]
+				this.msg = 'Loaded '+this.productos.length+' Products'
+			},
+			load_data: function() {
+				
+				if (this.$.ajax.lastResponse.err)
+					this.msg = this.$.ajax.lastResponse.err
+				else
+				{
+					localStorage["prod_data"] = JSON.stringify(this.$.ajax.lastResponse)
+					this.productos = JSON.parse(localStorage["prod_data"])
+					this.msg = 'Loaded '+this.$.ajax.lastResponse.length+' Products'
+				}
+			},
+			ajax_error: function() {
+				console.log(this.$.ajax.lastError)
+				//alert("<%= lng('Error Processing Request: ')%>", this.$.ajax.lastError)
+				this.msg = 'Error Loading Products'
+				//alert(this.msg)
+			}
+		})
+	  </script>
+	</dom-module>
+	
+	<!--*** View Pedido ***-->
+	<!--*******************-->
+	
+	<dom-module id="tab-pedido">
+	  <template>
+		<style>
+			/*paper-input { margin-left: 12px; }
+			paper-button {
+				margin-top: 40px;
+				padding-left: 25px;
+				padding-rigth: 25px;
+				width: 180px;
+			}*/
+		</style>
+		<iron-ajax id="ajax" method='POST' handle-as="json" on-response="load_data" on-error="ajax_error"></iron-ajax>
+		<h3 style="margin: 25px 0px 0px 15px;"><iron-icon icon="social:person" style="color:purple;margin-right:10px;"></iron-icon>
+			Customer<iron-icon icon="search" on-click="clientes" style="margin-left:3px;color:chocolate"></iron-icon>
+		</h3>
+		<div style="display: flex;justify-content:center;">
+			<paper-input id="clte" value=[[cliente.nombre]] placeholder="Select a Customer..." no-label-float style="width: 300px;" readonly></paper-input>
+		</div>
+		<!--<input is="iron-input" value={{cliente.nombre}} style="width: 300px;" readonly></input>-->
+		<div style="display: flex;justify-content:center;">
+		   <paper-input id="disponible" value=[[cliente.disponible]] label="Available Credit" style="width: 120px;" readonly></paper-input>
+		   <paper-input id="dcto" value=[[cliente.dcto_txt]] label="Discount" style="width: 90px; padding-left:25px;" readonly></paper-input>
+		</div>
+		<div style="margin-left:40px;color:blue;"> More ...</div>
+		<h3 style="margin: 25px 15px 0px 15px;"><iron-icon icon="shopping-basket" style="color:#00695C;margin-right:10px;"></iron-icon>
+			Order</h3>
+		<div style="display: flex;justify-content:center;">
+		   <paper-input id="sku" type="number" value=[[pedido.skus]] label="Products" style="width: 60px;" readonly></paper-input>
+		   <paper-input id="unds" type="number" value=[[pedido.unds]] label="Units" style="width: 70px; padding-left:7px;" readonly></paper-input>
+			<paper-input id="mto" type="number" value=[[pedido.mto]] label="Total Amount" style="width: 125px; padding-left:7px;" readonly></paper-input>
+		</div>
+		<br>
+		<div style="color:black;display: flex;justify-content:center;">
+			<paper-button style="padding-left:15px;padding-right:20px;height:35px;" on-click="enviar_pedido_demo"><iron-icon icon="arrow-upward" style="color: black;" size=32></iron-icon>Send</paper-button>
+			<paper-button style="margin-left:20px;padding-left:15px;padding-right:20px;height:35px;" on-click="guardar_pedido"><iron-icon icon="arrow-downward" style="color: black;" size=32></iron-icon>Save</paper-button>
+		</div>
+		<br>
+		<div style="color:black;display: flex;justify-content:center;">
+			<paper-button orange style="padding-left:15px;padding-right:20px;height:35px;" on-click="borrar_pedido"><iron-icon icon="highlight-off" style="color: black;" size=32></iron-icon>Delete Order</paper-button>
+		</div>
+		<h4 style="margin-left:30px;">{{msg}}</h4>
+	  </template>
+	  <script>
+		Polymer({
+
+		is: 'tab-pedido',
+		
+		properties: {
+			/*pedido: {
+				type: Object,
+				value: function() { return {}; }
+			}*/
+		},
+		ready: function() {
+			this.app_pedido = document.getElementById('app_pedido')
+			if (this.cliente == undefined)
+			 this.cliente = {
+				id: 0,
+				nombre: "Select a Customer...",
+				disponible: 0,
+				//dcto_cial: 0,
+				dcto_txt: ' %'
+			 }
+		},
+		clientes: function() {
+			this.app_pedido.clientes()
+		},
+		set_cliente: function(cliente) {
+			cliente.disponible = cliente.credito - cliente.saldo 
+			cliente.dcto_txt = cliente.dcto_cial+' %'
+			this.cliente = cliente
+		},
+		borrar_pedido: function() {
+		  if (this.pedido.skus != 0)
+		  {
+			var r = confirm("Delete Order ?");
+			if (r == true) 
+			{
+				this.app_pedido.set_pedido([])
+				this.pedido = this.app_pedido.total_pedido()
+			}
+		  }
+		},
+		total_pedido: function(total) {
+			this.pedido = total
+		},
+		validar_pedido: function() {
+			if (this.cliente.id == undefined)
+			{
+				alert('A Customer Must be Selected')
+				return false 
+			}
+			if (this.app_pedido.get_pedido().slice(0).length == 0)
+			{
+				alert('Order without lines')
+				return false 
+			}
+			return true
+		},
+		guardar_pedido: function() {
+			if (!this.validar_pedido()) return
+				
+			var pedido = {
+				id: this.cliente.id,
+				nombre: this.cliente.nombre,
+				rng: this.app_pedido.get_pedido().slice(0)
+			}
+			for (var atr in this.pedido) { pedido[atr] = this.pedido[atr]; }
+			//console.log(pedido)
+			var pdtes = []
+			if (localStorage.getItem("ped_pdtes") !== null)
+				pdtes = JSON.parse(localStorage.getItem("ped_pdtes"))
+			pdtes.unshift(pedido)
+			localStorage['ped_pdtes'] = JSON.stringify(pdtes)
+			//console.log(pdtes)
+			alert('Order Saved')
+			//console.log(this.app_pedido.get_pedido())
+		},
+		enviar_pedido_demo: function() {
+			alert('This is a Demo, Contact Us for Service')
+		},
+		enviar_pedido: function() {
+			if (!this.validar_pedido()) return
+			if (this.cliente.id != 0)
+			{
+				this.$.ajax.url = "http://ba43c833.ngrok.io/pedido/crear"
+				this.$.ajax.contentType="application/json"
+
+				var rng = this.app_pedido.get_pedido().slice(0)
+				var rng2 = []
+				for (var i=0; i<rng.length; i++)
+				rng2.push({id: rng[i].id, unds: rng[i].unds})
+				rng=[]
+			
+				var pedido = { 
+					"my_key": "v3nt4m0v1l.123", 
+					pedido: {
+						clte: this.cliente.id,
+						renglones:  rng2
+					}
+				}
+				//console.log('Pedido',pedido)
+				this.$.ajax.body = pedido
+				this.msg = 'Sending...'
+				this.$.ajax.generateRequest()
+			}
+			else alert('Must Select a Customer for the Order')
+		},
+		load_data: function() {
+				
+			if (this.$.ajax.lastResponse.err)
+				this.msg = 'Error' + this.$.ajax.lastResponse.err
+			else if (this.$.ajax.lastResponse.pdd)
+				this.msg = 'Created Order No '+this.$.ajax.lastResponse.pdd
+			else
+				this.msg = 'Invalid Response From Server: '+this.$.ajax.lastResponse
+		},
+		ajax_error: function() {
+			console.log(this.$.ajax.lastError)
+			//alert("<%= lng('Error Processing Request: ')%>", this.$.ajax.lastError)
+			this.msg = 'Error Sending Order'
+			//alert(this.msg)
+		}
+		})
+	  </script>
+	</dom-module>
+	
+	<dom-module id="tab-clientes">
+	  <template>
+		<style>
+			background-color: gainsboro;
+		</style>
+		<iron-ajax id="ajax" method='POST' handle-as="json" on-response="load_data" on-error="ajax_error"></iron-ajax>
+		<iron-a11y-keys id="a11y" target="[[target]]" keys="enter" on-keys-pressed="filter"></iron-a11y-keys>
+		<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
+		<paper-fab mini orange icon="autorenew" elevation=3 z-index=10 on-click="get_clientes_from_file" style="position:absolute; left:263px; top:100px;"></paper-fab>
+		<div>{{msg}}</div>
+		<div style="display:flex;">
+			<paper-input id="clte_src" label="Customer" style="width:7em;margin-left:7px;" no-label-float></paper-input>
+			<paper-icon-button icon="search" style="color:chocolate;" on-click="filter"></paper-icon-button>
+			<!--<paper-button mini id="loc-button" on-click="change_loc">{{loc}}</paper-button>-->
+			<strong id="tot" style="margin-left:15px;margin-top:10px;">{{filtered_data.length}} cust</strong>
+			<!--<paper-fab on-click="get_clientes" mini green icon="autorenew" elevation=3></paper-fab>-->
+		</div>
+		<paper-dialog id="clte_menu" style="width:180px;"> 
+			<div on-click="crear_pedido" style="min-height:20px;line-height:35px;">
+				<iron-icon icon="shopping-basket" style="color:blue;"></iron-icon>
+				<span style="margin-left:5px;">New Order</span>
+			</div>
+			<div on-click="info_cliente" style="min-height:20px;line-height:35px;">
+				<iron-icon icon="info-outline" style="color:chocolate;"></iron-icon>
+				<span style="margin-left:5px;">Customer Info</span>
+			</div>
+		</paper-dialog>
+		<template id="mytemplate" is="dom-repeat" items="{{filtered_data}}">
+		  <div class="card">
+			<strong class="desc">[[item.nombre]]</strong>
+			<div style="display:flex; justify-content:space-between">
+				<strong class="existencia">[[item.ciudad]]</strong>
+				<small class="precio" valor=[[item.saldo]] style="margin-left:20px;">Saldo: [[item.saldo]]</small> 
+				<paper-icon-button id="{{item.id}}" icon="more-vert" on-click="open_clte_menu" style="color:chocolate;"></paper-icon-button>
+			</div>
+		  </div>
+		</template>
+	  </template>
+	  <script>
+		Polymer({
+
+		is: 'tab-clientes',
+		ready: function() {
+			this.app_pedido = document.getElementById('app_pedido')
+			if (localStorage.getItem("cltes_data") === null)
+				this.clientes = []
+			 else
+			    this.clientes = JSON.parse(localStorage.getItem("cltes_data"))
+			this.msg = 'Customers: '+this.clientes.length
+			//console.log(this.clientes)
+			this.filtered_data = []
+		},
+		filter: function() {
+			this.filtered_data=[]
+			this.$.mytemplate.render()
+			var filtered_d = []
+			for (i=0; i<this.clientes.length; i++)
+				if (this.clientes[i].nombre.toLowerCase().indexOf(this.$.clte_src.value.toLowerCase()) > -1)
+					filtered_d.push(this.clientes[i])
+			/** Load Pedido Info **/
+			this.filtered_data = filtered_d
+			filtered_d = []	
+		},
+		get_clientes: function() {
+			/** Demo Electron **/
+			//this.get_clientes_from_file()
+			/** Demo Cordova **/
+			this.get_clientes_from_code()
+			return
+			/** Get from REST WS **/
+			this.$.ajax.url = 'https://api.myjson.com/bins/w3lb'
+			this.$.ajax.method = 'GET'
+			//this.$.ajax.url = 'http://localhost:3000/clientes/zona/16'
+			//this.$.ajax.url = 'http://fvc-ngoncalves:3000/clientes/zona/16'
+			this.$.ajax.contentType="application/json"
+			this.$.ajax.body = {"my_key": "v3nt4m0v1l.123"}
+			this.msg = 'Loading...'
+			this.$.ajax.generateRequest()
+		},
+		get_clientes_from_file: function() {
+			var fs = require('fs')
+			var data = fs.readFileSync('data/customers.json','utf8')
+			this.clientes = JSON.parse(data)
+			localStorage["cltes_data"] = data
+			this.msg = 'Loaded '+this.clientes.length+' Customers'
+		},
+		get_clientes_from_file: function() {
+			this.clientes = [
+				{"id":1, "nombre":"Morlong Associates","ciudad":"Chicago","address":"4 B Blue Ridge Blvd","phone1":"810-374-9840","phone2":"810-292-9388", "contact": "Kris Marrier","email":"josephine_darakjy@darakjy.org","saldo": 25000,"credito": 10000,"dcto_cial": 3},
+				{"id":2, "nombre":"Century Communications","ciudad":"Phoenix","address":"73 State Road 434 E","phone1":"602-277-4385","phone2":"602-953-6360", "contact": "Mattie Poquette","email":"mattie@aol.com","saldo": 8300,"credito": 10000,"dcto_cial": 2},
+				{"id":3, "nombre":"Buckley Miller & Wright","ciudad":"Los Angeles","address":"25 E 75th St #69","phone1":"310-498-5651","phone2":"310-254-3084", "contact": "Kiley Caldarera","email":"kiley.caldarera@aol.com","saldo": 8400,"credito": 12000,"dcto_cial": 1},
+				{"id":4, "nombre":"Farmers Insurance Group","ciudad":"Laredo","address":"56 E Morehead St","phone1":"956-537-6195","phone2":"956-841-7216", "contact": "Cammy Albares","email":"calbares@gmail.com","saldo": 3500,"credito": 14000,"dcto_cial": 0},
+				{"id":5, "nombre":"Post Box Services Plus","ciudad":"San Jose","address":"6 Greenleaf Ave","phone1":"408-540-1785","phone2":"408-813-4592", "contact": "Veronika Inouye","email":"vinouye@aol.com","saldo": 4000,"credito": 21000,"dcto_cial": 0},
+				{"id":6, "nombre":"Professional Image Inc","ciudad":"New York","address":"90991 Thorburn Ave","phone1":"212-582-4976","phone2":"212-934-5167", "contact": "Willow Kusko","email":"wkusko@yahoo.com","saldo": 3300,"credito": 18900,"dcto_cial": 1},
+				{"id":7, "nombre":"Milford Enterprises Inc","ciudad":"San Antonio","address":"7219 Woodfield Rd","phone1":"913-413-4604","phone2":"913-645-8918", "contact": "Dyan Oldroyd","email":"doldroyd@aol.com","saldo": 2000,"credito": 16400,"dcto_cial": 0},
+				{"id":8, "nombre":"International Eyelets Inc","ciudad":"Miami","address":"20 S Babcock St","phone1":"907-741-1044","phone2":"907-227-6777", "contact": "Erick Ferencz","email":"erick.ferencz@aol.com","saldo": 3300,"credito": 31000,"dcto_cial": 2},
+				{"id":9, "nombre":"Rapid Trading Intl","ciudad":"Fairbanks","address":"1048 Main St","phone1":"305-606-7291","phone2":"305-995-2078", "contact": "Lavera Perin", "email":"lperin@perin.org","saldo": 4600,"credito": 26000,"dcto_cial": 1},
+				{"id":10, "nombre":"Vicon Corporation","ciudad":"Austin","address":"4 B Blue Ridge Blvd","phone1":"512-486-3817","phone2":"512-861-3814", "contact": "Cecily Hollack", "email":"cecily@hollack.org","saldo": 3300,"credito": 24200,"dcto_cial": 3},
+				{"id":11, "nombre":"Wye Technologies Inc","ciudad":"Providence","address":"65895 S 16th St","phone1":"401-458-2547","phone2":"401-559-8961", "contact": "Delmy Ahle","email":"delmy.ahle@hotmail.com","saldo": 8200,"credito": 21000,"dcto_cial": 0},
+				{"id":12, "nombre":"Northwest Publishing","ciudad":"San Francisco","address":"55 Riverside Ave","phone1":"626-572-1096","phone2":"626-696-2777", "contact": "Wilda Giguere","email":"wilda@cox.net","saldo": 2200 ,"credito": 27000,"dcto_cial": 0},
+				{"id":13, "nombre":"Branford Wire & Mfg Co","ciudad":"Baltimore","address":"7140 University Ave","phone1":"254-782-8569","phone2":"254-205-1422", "contact": "Malinda Hochard","email":"malinda.hochard@yahoo.com","saldo": 1800,"credito": 22000,"dcto_cial": 1},
+				{"id":14, "nombre":"Alpenlite Inc","ciudad":"Newark","address":"4 Webbs Chapel Rd","phone1":"907-870-5536","phone2":"907-914-9482", "contact": "Natalie Fern","email":"natalie.fern@hotmail.com","saldo": 3200,"credito": 31000,"dcto_cial": 2},
+				{"id":15, "nombre":"Arthur A Oliver & Son Inc","ciudad":"Jacksonville","address":"524 Louisiana Ave Nw","phone1":"408-703-8505","phone2":"408-440-8447", "contact": "Lisha Centini","email":"lisha@centini.org","saldo": 1200,"credito": 24000,"dcto_cial": 0},
+				{"id":16, "nombre":"Killion Industries","ciudad":"Philadelphia","address":"185 Blackstone Bldge","phone1":"317-722-5066","phone2":"317-472-2412", "contact": "Alease Buemi","email":"alease@buemi.com","saldo": 1100,"credito": 33000,"dcto_cial": 1},
+				{"id":17, "nombre":"A K Construction Co","ciudad":"San Gabriel","address":"4800 Black Horse Pike","phone1":"307-279-3793","phone2":"", "contact": "Donte Kines","email":"dkines@hotmail.com","saldo": 2100,"credito": 18000,"dcto_cial": 0},
+				{"id":18, "nombre":"Wood & Whitacre Contractors","ciudad":"Anchorage","address":"83649 W Belmont Ave","phone1":"504-710-5840","phone2":"", "contact": "Brandon Callaro","email":"brandon_callaro@hotmail.com","saldo": 3400,"credito": 23000,"dcto_cial": 2}
+			]
+			this.msg = 'Loaded '+this.clientes.length+' Customers'
+		},
+		crear_pedido: function() {
+			this.$.clte_menu.close()
+			this.app_pedido.crear_pedido(this.cliente)
+		},
+		info_cliente: function() {
+			this.$.clte_menu.close()
+			alert('Customer Info')
+		},
+		open_clte_menu: function(e) {
+			var id = Number(e.target.domHost.id)
+			for (var i=0; i < this.filtered_data.length; i++)
+				if (id == this.filtered_data[i].id)
+				{
+					this.cliente = this.filtered_data[i]
+					i = this.filtered_data.length
+				}
+			//this.$.clte_menu.style.top = e.target.offsetTop+"px"
+			this.$.clte_menu.toggle()
+		},
+		load_data: function() {	
+			//console.log(this.$.ajax.lastResponse)
+			if (this.$.ajax.lastResponse.err)
+			{
+				this.msg = this.$.ajax.lastResponse.err
+				console.log(this.$.ajax.lastResponse.err)
+			}
+			else
+			{
+				localStorage["cltes_data"] = JSON.stringify(this.$.ajax.lastResponse)
+				this.clientes = JSON.parse(localStorage["cltes_data"])
+				this.msg = 'Loaded '+this.$.ajax.lastResponse.length+' Customers'
+			}
+		},
+		ajax_error: function() {
+			console.log(this.$.ajax.lastError)
+			//alert("<%= lng('Error Processing Request: ')%>", this.$.ajax.lastError)
+			this.msg = 'Error Loading Customers'
+			//alert(this.msg)
+		}
+		})
+	  </script>
+	</dom-module>
+	
+	<dom-module id="tab-pendientes">
+	  <template>
+		<iron-a11y-keys id="a11y" target="[[target]]" keys="enter" on-keys-pressed="filter"></iron-a11y-keys>
+		<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
+		<div style="display:flex;">
+			<paper-input id="ped_src" label="Cliente" style="width:7em;margin-left:7px;" no-label-float></paper-input>
+			<paper-icon-button icon="search" style="color:chocolate;" on-click="filter"></paper-icon-button>
+		</div>
+		<paper-dialog id="ped_menu" style="width:180px;"> 
+			<div on-click="enviar_pedido" style="min-height:20px;line-height:35px;">
+				<iron-icon icon="cloud-upload" style="color:blue;"></iron-icon>
+				<span style="margin-left:5px;">Send Order</span>
+			</div>
+			<div on-click="ver_pedido" style="min-height:20px;line-height:35px;">
+				<iron-icon icon="shopping-basket" style="color:green;"></iron-icon>
+				<span style="margin-left:5px;">Order Detail</span>
+			</div>
+			<div on-click="borrar_pedido" style="min-height:20px;line-height:35px;">
+				<iron-icon icon="highlight-off" style="color:chocolate;"></iron-icon>
+				<span style="margin-left:5px;">Delete</span>
+			</div>
+		</paper-dialog>
+		<template id="mytemplate" is="dom-repeat" items="{{filtered_data}}">
+		  <div class="card">
+			<strong class="desc">[[item.nombre]]</strong>
+			<div style="display:flex; justify-content:space-between">
+				<strong class="existencia">Unds: [[item.unds]]</strong>
+				<small class="precio" style="margin-left:20px;">Monto: [[item.mto]]</small>
+				<paper-icon-button id="{{item.id}}" icon="more-vert" on-click="open_menu" style="color:chocolate;"></paper-icon-button>
+			</div>
+		  </div>
+		</template>
+	  </template>
+	  <script>
+		Polymer({
+
+		is: 'tab-pendientes',
+		ready: function() {
+			this.app_pedido = document.getElementById('app_pedido')
+		},
+		load: function() {
+			if (localStorage.getItem("ped_pdtes") !== null)
+				this.pendientes = JSON.parse(localStorage.getItem("ped_pdtes"))
+			 else
+				this.pendientes = []
+			this.filtered_data = this.pendientes
+			//console.log(this.filtered_data)
+		},
+		filter: function() {
+			this.filtered_data=[]
+			this.$.mytemplate.render()
+			var filtered_d = []
+			for (i=0; i<this.pendientes.length; i++)
+				if (this.pendientes[i].nombre.toLowerCase().indexOf(this.$.ped_src.value.toLowerCase()) > -1)
+					filtered_d.push(this.pendientes[i])
+			/** Load Pedido Info **/
+			this.filtered_data = filtered_d
+			filtered_d = []	
+		},
+		open_menu: function(e) {
+			var id = Number(e.target.domHost.id)
+			for (var i=0; i < this.filtered_data.length; i++)
+			  if (id == this.filtered_data[i].id)
+			  {
+				this.pedido = this.filtered_data[i]
+				i = this.filtered_data.length
+			  }
+			//console.log(this.pedido)
+			this.$.ped_menu.open()
+		},
+		enviar_pedido: function() {
+			this.$.ped_menu.close()
+		},
+		ver_pedido: function() {
+			this.$.ped_menu.close()
+		},
+		borrar_pedido: function() {
+			this.$.ped_menu.close()
+			for (var i=0; i <= this.pendientes.length; i++)
+			  if (this.pedido.id == this.pendientes[i].id)
+			  {
+				this.pendientes.splice(i, 1)
+				i= this.pendientes.length
+			  }
+			localStorage['ped_pdtes'] = JSON.stringify(this.pendientes) 
+			this.filter()
+		}
+		})
+	  </script>
+	</dom-module>
+	
+	<dom-module id="tab-acerca">
+	  <template>
+		<style>
+			:host { background-color: white; }
+		</style>
+		<!--<div id='main'>-->
+			<!--<div class="foto" style="display:flex;justify-content:center;"></div>-->
+			<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
+			<img src="../images/highwindow2.jpg">
+			<!--<div style="display:flex;background-color:#33691e;height:35px;"></div>
+			
+			<div style="display:flex;justify-content:center;">
+				<div class="logo"></div>
+			</div>-->
+			<div style="color:white;margin-top:-48px;margin-left:139px;font-size:22px;">Mobile Demo App</div>
+			<br><br>
+			<div center>Version 1.2.0</div>
+			<br>
+			<div center>Copyright 2016 Nuno Goncalves</div>
+			<div center>All Rigths Reserved</div>
+			<br>
+			<div center>twitter: @NunoGoncalvesR</div>
+			<div center>email: e_npgr@yahoo.com</div>
+		<!--</div>-->
+	  </template>
+	  <script>
+		Polymer({
+
+		is: 'tab-acerca',
+		ready: function() {
+		
+		}
+		})
+	  </script>
+	</dom-module>
+	
+	<!--*** MAIN ***-->
+	<!--************-->
+	
+    <app-drawer-layout id="my_app" fullbleed>
+
+      <!-- Drawer content -->
+      <app-drawer id="menu" style="--app-drawer-scrim-background:gainsboro">
+        <!--<app-toolbar style="background-color: #33691e;color:white;height: 120px;">
+			<div bottom-item style="margin-left: 70px;margin-bottom: 5px;">Farvenca Móvil</div>-->
+			<!--<app-menu style="margin-left: 0px;"></app-menu>-->
+		<!--</app-toolbar>-->
+		<div style="display:flex;background-color:#33691e;height:50px;"></div>
+		<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
+		<!--<div style="display:flex;background-color:#9ccc66;height:5px;"></div>-->
+		<!--<div style="display:flex;background-color:#33691e;height:35px;"></div>
+		-->
+		<!--<div class="logo"></div>-->
+		<img src="../images/menuimg2.jpg" width=220 height=95>
+		<div style="color:white;margin-top:-43px;margin-left:143px;font-size:20px;margin-bottom:27px;">
+		  MENU</div>
+		<!--<hr style="color:#9ccc66;">-->
+		<div class="menu_item" on-click="crear_pedido2">
+			<iron-icon icon="shopping-cart" style="color:#68c122;" item-icon></iron-icon>
+			New Order
+		</div>
+		<hr>
+		<div class="menu_item" on-click="pendientes">
+			<iron-icon icon="assignment" style="color:#283593;" item-icon></iron-icon>
+			Saved Orders
+		</div>
+		<hr>
+		<div class="menu_item" on-click="view2_menu">
+			<iron-icon icon="loyalty" style="color:#EC407A;" item-icon></iron-icon>
+			Products
+		</div>
+		<hr>
+		<div class="menu_item" on-click="clientes">
+			<iron-icon icon="social:person" style="color:#AB47BC;" item-icon></iron-icon>
+			Customers
+		</div>
+		<hr>
+		<div class="menu_item" on-click="configuracion">
+			<iron-icon icon="settings" style="color:#F57C00;" item-icon></iron-icon>
+			Configuration
+		</div>
+		<hr>
+		<div class="menu_item" on-click="acerca_de">
+			<iron-icon icon="perm-device-information" style="color:#1E88E5;" item-icon></iron-icon>
+			About
+		</div>
+		<hr>
+      </app-drawer>
+	  
+	  <!-- App Settings -->
+	  <paper-dialog id="app_settings" modal=true style="width:250px;border-radius:5px;"> 
+		<div style="display=flex;justify-content:center;">
+			<h2>Configuration</h2>
+		</div>
+		<paper-input id="id_rep" style="margin-top:-10px;" label="Vendor Code"></paper-input>
+		<paper-input id="pwd_rep" style="margin-top:-10px;" label="Password"></paper-input>
+		<paper-input id="min_ord_u" style="margin-top:-10px;" label="Minimun Order (Units)"></paper-input>
+		<paper-input id="min_ord_a" style="margin-top:-10px;" label="Minimun Order (Amount)"></paper-input>
+		<paper-input id="url" style="margin-top:-10px;" label="Server Url" value="https://" readonly></paper-input>
+		<div style="display:flex;">
+			<paper-button on-click="conf_guardar">Save</paper-button>
+			<paper-button on-click="conf_salir" style="margin-left:20px;">Exit</paper-button>
+		</div>
+	  </paper-dialog>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header id="header" condenses reveals effects="waterfall">
+          <app-toolbar id="toolbar" style="height: 85px;background-color:#33691e">
+			<div top-item style="display: flex; justify-content: space-between; margin: 5px 15px;">
+				<paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+				<div main-title>{{titulo}}</div>
+				<paper-icon-button icon="more-vert"></paper-icon-button>
+				<!--<iron-icon icon="" on-click="full" style="color: white;" size=32></iron-icon>-->
+			</div>
+			<paper-tabs id="tabs" bottom-item selected="0" <!--class="bottom self-end"--> >
+				<paper-tab on-click="view1"><iron-icon icon="shopping-basket" style="color:white;" item-icon></iron-icon></paper-tab>
+				<paper-tab on-click="view2"><iron-icon icon="loyalty" style="color:white;" item-icon></iron-icon></paper-tab>
+				<paper-tab on-click="view3"><iron-icon icon="assignment" style="color:white;" item-icon></iron-icon></paper-tab>
+			</paper-tabs>
+          </app-toolbar>
+        </app-header>
+
+			<tab-pedido id='view1' hide></tab-pedido>
+			<tab-pendientes id='pendientes' hide></tab-pendientes>
+			<tab-prods id='view2'  hide></tab-prods>
+			<tab-renglones id='view3' hide></tab-renglones>
+			<tab-clientes id='view_clientes' hide></tab-clientes>
+			<tab-acerca id='acerca' style="margin-top: -40px;" hide></tab-acerca>
+
+      </app-header-layout>
+
+    </app-drawer-layout>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'app-pedido',
+	  
+	  properties: {
+		/*pedido: {
+			type: String,
+			value: 'Prueba 1'
+		}*/
+	  },
+	  ready: function() {
+		//this.titulo = 'Pedido'
+		this.pedido = []
+		this.cliente = []
+		//this.current_view = ''
+		//this.view1()
+		this.acerca_de()
+	  },
+	  agregar_renglon: function(renglon) {
+		
+		var index = -1
+		for (var i=0; i<this.pedido.length; i++)
+		  if (this.pedido[i].id == renglon.id)
+		  {
+			index = i
+			i = this.pedido.length
+		  }
+		if (index == -1)		
+			this.pedido.unshift(renglon)
+		else
+		{
+			if (renglon.unds != 0)
+				this.pedido[index].unds = renglon.unds
+			 else
+				this.pedido.splice(index,1)
+		}
+	  },
+	  get_pedido: function() {
+		return this.pedido.slice(0)
+	  },
+	  set_pedido: function(renglones) {
+		this.pedido = renglones.slice(0)
+	  },
+	  total_pedido: function() {
+		var total = {	skus: 0,	unds: 0,	mto: 0  }
+		for (var i=0; i < this.pedido.length; i++)
+		{
+			total.skus ++
+			total.unds += this.pedido[i].unds
+			total.mto += (this.pedido[i].unds * this.pedido[i].prc)
+		}
+		total.mto = Math.round(total.mto * 100) / 100
+		//console.log('total pedido', total)
+		return total
+	  },
+	  set_cliente: function(clte) {
+		this.cliente = clte
+	  },
+	  get_cliente: function() {
+		return this.cliente
+	  },
+	  get_unds: function(id) {
+		var unds = -1
+		for (var i=0; i < this.pedido.length; i++)
+		{
+			if (id == this.pedido[i].id)
+			{
+				unds = this.pedido[i].unds
+				i = this.pedido.length
+			}
+		}
+		return unds
+	  },
+	  full: function() {
+	  
+		var el = document.getElementById("my_app"); 
+		//el.requestFullscreen()
+		el.webkitRequestFullScreen()
+
+	  },
+	  crear_pedido2() {
+		this.crear_pedido()
+	  },
+	  crear_pedido: function(cliente) {
+		if (cliente != undefined)
+		{
+			this.cliente = cliente
+			this.$.view1.set_cliente(this.cliente)
+		}
+		this.$.tabs.removeAttribute("hide");
+		this.$.tabs.selected = 0
+		this.view1()		
+		this.$.menu.close()
+	  },
+	  view1: function() {
+		//this.$.toolbar.style.height = '85px';
+		this.titulo = 'Order'
+		this.$.view1.total_pedido(this.total_pedido())
+		if (this.current_view) this.$[this.current_view].setAttribute("hide","")
+		this.current_view = 'view1'
+		this.$[this.current_view].removeAttribute("hide");
+	  },
+	  view2_menu: function() {
+		this.$.tabs.removeAttribute("hide","")
+		this.$.menu.close()
+		this.view2()
+	  },
+	  view2: function() {
+		//this.$.toolbar.style.height = '85px';
+		//console.log('view2')
+		this.$[this.current_view].setAttribute("hide","")
+		this.$.tabs.select(1)
+		this.current_view = 'view2'
+		this.titulo = 'Products'
+		if (this.$.view2.has_filter())
+			this.$.view2.filter()
+		this.current_view = 'view2'
+		this.$[this.current_view].removeAttribute("hide");
+	  },
+	  view3: function() {
+		//this.$.toolbar.style.height = '85px';
+		this.$[this.current_view].setAttribute("hide","")
+		this.current_view = 'view3'
+		this.titulo = 'Lines'
+		this.$.view3.set_renglones(this.pedido.slice(0))
+		this.current_view = 'view3'
+		this.$[this.current_view].removeAttribute("hide");
+	  },
+	  pendientes: function() {
+		//this.$.toolbar.style.height = '45px';
+		this.titulo = 'Saved Orders'
+		this.$.tabs.setAttribute("hide","")
+		this.$[this.current_view].setAttribute("hide","")
+		this.current_view = 'pendientes'
+		this.$.pendientes.load()
+		this.$[this.current_view].removeAttribute("hide");
+		this.$.menu.close()
+	  },
+	  clientes: function() {
+	  //this.$.toolbar.style.height = '45px';
+		this.titulo = 'Customers'
+		this.$.tabs.setAttribute("hide","")
+		this.$[this.current_view].setAttribute("hide","")
+		this.current_view = 'view_clientes'
+		this.$[this.current_view].removeAttribute("hide");
+		this.$.menu.close()
+	  },
+	  configuracion: function() {
+		//localStorage["prod_data"] = JSON.stringify(prods)*/
+		if (localStorage.getItem("app_conf") !== null)
+		{
+			var conf = JSON.parse(localStorage.getItem("app_conf"))
+			this.$.id_rep.value = conf.id_rep
+			this.$.pwd_rep.value = conf.pwd_rep
+		}
+		this.$.menu.close()
+		this.$.app_settings.open()
+	  },
+	  conf_guardar: function() {
+		var conf = {
+			id_rep: this.$.id_rep.value,
+			pwd_rep: this.$.pwd_rep.value
+		}
+		localStorage["app_conf"] = JSON.stringify(conf)
+				
+		this.$.app_settings.close()
+	  },
+	  conf_salir: function() {
+		this.$.app_settings.close()
+	  },
+	  acerca_de: function() {
+		//this.$.toolbar.style.height = '45px';
+		//this.$.acerca.style.top = '0px';
+		this.titulo = ''
+		this.$.tabs.setAttribute("hide","")
+		if (this.current_view) this.$[this.current_view].setAttribute("hide","")
+		this.current_view = 'acerca'
+		this.$[this.current_view].removeAttribute("hide");
+		this.$.menu.close()
+	  }
+    });
+
+  </script>
+</dom-module>

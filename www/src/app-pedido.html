@@ -598,7 +598,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<strong class="desc">[[item.nombre]]</strong>
 			<div style="display:flex; justify-content:space-between">
 				<strong class="existencia">[[item.ciudad]]</strong>
-				<small class="precio" valor=[[item.saldo]] style="margin-left:20px;">Saldo: [[item.saldo]]</small> 
+				<small class="precio" valor=[[item.saldo]] style="margin-left:20px;">Credit: [[item.saldo]]</small> 
 				<paper-icon-button id="{{item.id}}" icon="more-vert" on-click="open_clte_menu" style="color:chocolate;"></paper-icon-button>
 			</div>
 		  </div>
@@ -905,8 +905,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</div>
 		<paper-input id="id_rep" style="margin-top:-10px;" label="Vendor Code"></paper-input>
 		<paper-input id="pwd_rep" style="margin-top:-10px;" label="Password"></paper-input>
-		<paper-input id="min_ord_u" style="margin-top:-10px;" label="Minimun Order (Units)"></paper-input>
-		<paper-input id="min_ord_a" style="margin-top:-10px;" label="Minimun Order (Amount)"></paper-input>
+		<paper-input id="min_ord_u" style="margin-top:-10px;" label="Minimun Order (Units)" type="number"></paper-input>
+		<paper-input id="min_ord_a" style="margin-top:-10px;" label="Minimun Order (Amount)" type="number"></paper-input>
 		<paper-input id="url" style="margin-top:-10px;" label="Server Url" value="https://" readonly></paper-input>
 		<div style="display:flex;">
 			<paper-button on-click="conf_guardar">Save</paper-button>

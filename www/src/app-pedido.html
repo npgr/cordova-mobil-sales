@@ -374,6 +374,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 					{"id": 24,"prd":"Laser Imprintable Binding System Covers","category":"Binders and Binder Accessories","ex":5,"prc": 11.2, "discount":12}
 				]
 				this.msg = 'Loaded '+this.productos.length+' Products'
+				localStorage['prod_data'] = JSON.stringify(this.productos)
 			},
 			load_data: function() {
 				
@@ -437,7 +438,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</div>
 		<br>
 		<div style="color:black;display: flex;justify-content:center;">
-			<paper-button orange style="padding-left:15px;padding-right:20px;height:35px;" on-click="borrar_pedido"><iron-icon icon="highlight-off" style="color: black;" size=32></iron-icon>Delete Order</paper-button>
+			<paper-button orange style="padding-left:15px;padding-right:20px;height:35px;" on-click="borrar_pedido"><iron-icon icon="highlight-off" style="color: black;" size=32></iron-icon>Delete</paper-button>
 		</div>
 		<h4 style="margin-left:30px;">{{msg}}</h4>
 	  </template>
@@ -674,6 +675,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				{"id":18, "nombre":"Wood & Whitacre Contractors","ciudad":"Anchorage","address":"83649 W Belmont Ave","phone1":"504-710-5840","phone2":"", "contact": "Brandon Callaro","email":"brandon_callaro@hotmail.com","saldo": 3400,"credito": 23000,"dcto_cial": 2}
 			]
 			this.msg = 'Loaded '+this.clientes.length+' Customers'
+			localStorage['cltes_data'] = JSON.stringify(this.clientes)
 		},
 		crear_pedido: function() {
 			this.$.clte_menu.close()
@@ -723,7 +725,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		<iron-a11y-keys id="a11y" target="[[target]]" keys="enter" on-keys-pressed="filter"></iron-a11y-keys>
 		<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
 		<div style="display:flex;">
-			<paper-input id="ped_src" label="Cliente" style="width:7em;margin-left:7px;" no-label-float></paper-input>
+			<paper-input id="ped_src" label="Customer" style="width:7em;margin-left:7px;" no-label-float></paper-input>
 			<paper-icon-button icon="search" style="color:chocolate;" on-click="filter"></paper-icon-button>
 		</div>
 		<paper-dialog id="ped_menu" style="width:180px;"> 
@@ -817,7 +819,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		<!--<div id='main'>-->
 			<!--<div class="foto" style="display:flex;justify-content:center;"></div>-->
 			<div style="display:flex;background-color:#9ccc66;height:5px;"></div>
-			<img src="../images/highwindow2.jpg">
+			<div center>
+				<img src="../images/highwindow2.jpg">
+			</div>
 			<!--<div style="display:flex;background-color:#33691e;height:35px;"></div>
 			
 			<div style="display:flex;justify-content:center;">
@@ -825,10 +829,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			</div>-->
 			<div style="color:white;margin-top:-48px;margin-left:139px;font-size:22px;">Mobile Demo App</div>
 			<br><br>
-			<div center>Version 1.2.0</div>
+			<div center>Version 1.2.1</div>
 			<br>
-			<div center>Copyright 2016 Nuno Goncalves</div>
-			<div center>All Rigths Reserved</div>
+			<div center>Developed by Nuno Goncalves 2016</div>
+			<!--<div center>All Rigths Reserved</div>-->
 			<br>
 			<div center>twitter: @NunoGoncalvesR</div>
 			<div center>email: e_npgr@yahoo.com</div>

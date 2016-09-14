@@ -1,1 +1,3 @@
-/platforms
+/platforms/*
+!/platforms/browser_demo
+/platforms/browser_demo/bower_components

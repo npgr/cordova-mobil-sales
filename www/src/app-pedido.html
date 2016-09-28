@@ -927,7 +927,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<div top-item style="display: flex; justify-content: space-between; margin: 5px 15px;">
 				<paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
 				<div main-title>{{titulo}}</div>
-				<paper-icon-button icon="more-vert"></paper-icon-button>
+				<paper-icon-button icon="more-vert" on-click="full"></paper-icon-button>
 				<!--<iron-icon icon="" on-click="full" style="color: white;" size=32></iron-icon>-->
 			</div>
 			<paper-tabs id="tabs" bottom-item selected="0" <!--class="bottom self-end"--> >
@@ -952,8 +952,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
-
-    Polymer({
+	Polymer({
 
       is: 'app-pedido',
 	  
@@ -970,6 +969,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		//this.current_view = ''
 		//this.view1()
 		this.acerca_de()
+		if (localStorage.getItem("full_enabled") !== null)
+		  if (localStorage['full_enabled'] == 'yes')
+			alert("Press Top Right Button for FullScreen")
 	  },
 	  agregar_renglon: function(renglon) {
 		
@@ -1027,11 +1029,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		return unds
 	  },
 	  full: function() {
-	  
-		var el = document.getElementById("my_app"); 
-		//el.requestFullscreen()
-		el.webkitRequestFullScreen()
-
+		if (localStorage.getItem("full_enabled") !== null)
+			if (localStorage['full_enabled'] == 'yes')
+			{
+				var el = document.getElementById("my_app"); 
+				//el.requestFullscreen()
+				el.webkitRequestFullScreen()
+			}
 	  },
 	  crear_pedido2() {
 		this.crear_pedido()
@@ -1134,6 +1138,5 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		this.$.menu.close()
 	  }
     });
-
   </script>
 </dom-module>
